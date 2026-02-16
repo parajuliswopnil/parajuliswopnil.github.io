@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Understanding Ownership model in Rust</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="../style.css">
+
+    <style>
+        /* Blog-specific refinements */
+
+        body {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .post-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .post-title {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .post-meta {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .post-content h2 {
+            margin-top: 2rem;
+        }
+
+        .post-content p {
+            margin-bottom: 1.2rem;
+        }
+
+        .post-content pre {
+            background: #f5f5f5;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        .post-content code {
+            font-family: monospace;
+        }
+
+        .back-link {
+            margin-top: 3rem;
+            display: inline-block;
+            text-decoration: none;
+            color: #003366;
+            font-family: Arial, sans-serif;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<article>
+
+    <header class="post-header">
+        <h1 class="post-title">Understanding Ownership model in Rust</h1>
+        <div class="post-meta">
+            February 16, 2026 · 8 min read
+        </div>
+    </header>
+
+    <section class="post-content">
+
+        <p>
+	    Coming soon.
+        </p>
+
+<!--         <h2>Abstractions and Their Costs</h2> -->
+<!---->
+<!--         <p> -->
+<!--             Every abstraction has a cost. In garbage-collected languages, that cost often appears as -->
+<!--             unpredictable latency. In manually managed environments, the cost appears as cognitive load. -->
+<!--             Modern languages like Rust attempt to reconcile these trade-offs through compile-time -->
+<!--             enforcement. -->
+<!--         </p> -->
+<!---->
+<!--         <pre><code class="language-rust"> -->
+<!-- fn main() { -->
+<!--     let x = String::from("systems"); -->
+<!--     let y = x; // ownership moves here -->
+<!---->
+<!--     // println!("{}", x); // compile-time error -->
+<!-- } -->
+<!--         </code></pre> -->
+<!---->
+<!--         <p> -->
+<!--             The compiler prevents use-after-free errors by enforcing ownership transfer rules. -->
+<!--             This shifts correctness guarantees from runtime to compile time. -->
+<!--         </p> -->
+<!---->
+<!--         <h2>Memory as a First-Class Concept</h2> -->
+<!---->
+<!--         <p> -->
+<!--             In systems design, memory is not an implementation detail. It is a constraint and a -->
+<!--             performance boundary. Allocations, deallocations, cache locality, and pointer aliasing -->
+<!--             directly influence behavior. -->
+<!--         </p> -->
+<!---->
+<!--         <p> -->
+<!--             For example, consider the difference between a contiguous vector and a linked list: -->
+<!--         </p> -->
+<!---->
+<!--         <ul> -->
+<!--             <li>Vectors benefit from cache locality.</li> -->
+<!--             <li>Linked lists incur pointer chasing penalties.</li> -->
+<!--             <li>Branch prediction interacts differently with each structure.</li> -->
+<!--         </ul> -->
+<!---->
+<!--         <h2>Mathematical Framing</h2> -->
+<!---->
+<!--         <p> -->
+<!--             From a mathematical perspective, ownership models can be viewed as a linear type system. -->
+<!--             A value may be consumed exactly once unless explicitly borrowed. This mirrors constraints -->
+<!--             found in resource-sensitive logics. -->
+<!--         </p> -->
+<!---->
+<!--         <p> -->
+<!--             Such formal grounding is not aesthetic — it directly informs safe systems construction. -->
+<!--         </p> -->
+<!---->
+<!--         <h2>Conclusion</h2> -->
+<!---->
+<!--         <p> -->
+<!--             Systems thinking requires rigor. It demands awareness of the machine while maintaining -->
+<!--             clarity of abstraction. The most effective systems code is not merely correct — -->
+<!--             it is intentional. -->
+<!--         </p> -->
+<!---->
+    </section>
+
+</article>
+
+<a href="../index.html" class="back-link">← Back to Home</a>
+
+</body>
+</html>
+
