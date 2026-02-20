@@ -1,86 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Understanding Ownership model in Rust</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../style.css" />
 
     <style>
-        /* Blog-specific refinements */
+      /* Blog-specific refinements */
 
-        body {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+      body {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
 
-        .post-header {
-            margin-bottom: 2.5rem;
-        }
+      .post-header {
+        margin-bottom: 2.5rem;
+      }
 
-        .post-title {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-        }
+      .post-title {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+      }
 
-        .post-meta {
-            color: #666;
-            font-size: 0.9rem;
-        }
+      .post-meta {
+        color: #666;
+        font-size: 0.9rem;
+      }
 
-        .post-content h2 {
-            margin-top: 2rem;
-        }
+      .post-content h2 {
+        margin-top: 2rem;
+      }
 
-        .post-content p {
-            margin-bottom: 1.2rem;
-        }
+      .post-content p {
+        margin-bottom: 1.2rem;
+      }
 
-        .post-content pre {
-            background: #f5f5f5;
-            padding: 1rem;
-            overflow-x: auto;
-            font-size: 0.9rem;
-        }
+      .post-content pre {
+        background: #f5f5f5;
+        padding: 1rem;
+        overflow-x: auto;
+        font-size: 0.9rem;
+      }
 
-        .post-content code {
-            font-family: monospace;
-        }
+      .post-content code {
+        font-family: monospace;
+      }
 
-        .back-link {
-            margin-top: 3rem;
-            display: inline-block;
-            text-decoration: none;
-            color: #003366;
-            font-family: Arial, sans-serif;
-        }
+      .back-link {
+        margin-top: 3rem;
+        display: inline-block;
+        text-decoration: none;
+        color: #003366;
+        font-family: Arial, sans-serif;
+      }
 
-        .back-link:hover {
-            text-decoration: underline;
-        }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+
+      /* ===== Code Block Container ===== */
+pre.sourceCode {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  overflow-x: auto;
+  line-height: 1.6;
+  font-size: 15px;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+/* Remove extra spacing */
+pre.sourceCode code {
+  white-space: pre;
+}
+
+/* ===== Syntax Colors (VSCode-like) ===== */
+
+/* keywords */
+.kw {
+  color: #c586c0;
+  font-weight: 600;
+}
+
+/* data types */
+.dt {
+  color: #4ec9b0;
+}
+
+/* operators */
+.op {
+  color: #d4d4d4;
+}
+
+/* numbers */
+.dv {
+  color: #b5cea8;
+}
+
+/* strings */
+.st {
+  color: #ce9178;
+}
+
+/* comments */
+.co {
+  color: #6a9955;
+  font-style: italic;
+}
     </style>
-</head>
+  </head>
 
-<body>
-
-<article>
-
-    <header class="post-header">
+  <body>
+    <article>
+      <header class="post-header">
         <h1 class="post-title">Understanding Ownership model in Rust</h1>
-        <div class="post-meta">
-            February 16, 2026 · 8 min read
-        </div>
-    </header>
+        <div class="post-meta">February 16, 2026 · 8 min read</div>
+      </header>
 
-    <section class="post-content">
-    </section>
+      <section class="post-content">
+        </h1>
+        <h2 id="memory-safety">Memory safety</h2>
+        <p>Rust programming language solves a fundamental problem of memory
+        safety that is prevalent many programming languages. The problem of
+        memory safety is and not limited to the following memory bugs.</p>
+        <ol type="1">
+        <li>Double free</li>
+        <li>Use after free</li>
+        <li>Memory leaks</li>
+        </ol>
+        <p>These memory bugs are the most common types of memory bugs especially
+        in system languages like C, C++ where memory safety has to be guaranteed
+        by the programmers themselves and these bugs can slip through the cracks
+        when a system grows really large.</p>
+        <p>Programming languages like GO, JAVA tackle these problems by using a
+        garbage collector, another program that run alongside the user program
+        that book keeps all the resources used by the user program, and properly
+        allocate and deallocate the resources as per the need of the
+        program.</p>
+        <p>This has a huge cost penalty because the garbage collector has to run
+        along side the program to prevent any kind of above mentioned bugs.</p>
+        <p>Rust tackles this fundamental problem by its ownership model. Instead
+        of paying a huge runtime cost, Rust instead chooses to pay a compilation
+        cost to check if these bugs appear in the code base and the resulting
+        binary is light weight, memory safe and as fast as the system languages
+        like C and C++ without these memory safety guarantees.</p>
+        <p>We will delve a bit into how the ownership model actually makes this
+        possible.</p>
+        <h2 id="background-on-rusts-ownership-model">Background on Rust’s
+        Ownership model</h2>
+        <p>To understand why Rust’s ownership model even exists, lets first
+        understand the concept of memory layout and how the program stores all
+        its resources on the <code>stack</code> and <code>heap</code>.</p>
+        <h3 id="allocation">Allocation</h3>
+        <p>Stack is the place in memory that the program use, where all the
+        resources with a fixed size is kept. For example an unsigned int of size
+        64 bits <code>u64</code> always has the same size and is kept on the
+        stack.</p>
+        <p>But not all the resources the program uses can be of fixed size. The
+        program might require resources that does not have a fixed size at
+        compile time. Such data is kept in heap.</p>
+        <p>Lets now look at how the resources is represented in the stack and
+        heap.</p>
+        <div class="sourceCode" id="cb1"><pre
+        class="sourceCode rust"><code class="sourceCode rust"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> x<span class="op">:</span> <span class="dt">i64</span> <span class="op">=</span> <span class="op">-</span><span class="dv">5</span> </span>
+        <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> y<span class="op">:</span> <span class="op">&amp;</span><span class="dt">str</span> <span class="op">=</span> <span class="st">&quot;hello&quot;</span><span class="op">;</span> <span class="co">// this is a string literal, its size is fixed at compile time</span></span>
+        <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> z<span class="op">:</span> <span class="dt">u64</span> <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span></code></pre></div>
+        <img src="../assets/Pasted image 20260216182006.png" alt="Stack allocation">
+        <p>In the above diagram we can see how the values are stored on the
+        stack. The most recent value stays on the top of the stack and also gets
+        removed first.</p>
+        <p>Now lets look at a more complex type whose size is unknown at compile
+        time.</p>
+        <div class="sourceCode" id="cb2"><pre
+        class="sourceCode rust"><code class="sourceCode rust"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> string_hello <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">&quot;hello&quot;</span>)<span class="op">;</span> </span></code></pre></div>
+        <p>We have used the String type whose size is unknown at compile time.
+        Because its size is unknown at compile time, the program has to allocate
+        memory for <code>string_hello</code> variable by asking the allocator to
+        do so. The allocator now allocates a memory chunk of a certain capacity
+        for the <code>string_hello</code> variable.</p>
+        <img src="../assets/Pasted image 20260220102550.png" alt="Description of the image">
+        <p>A String type is represented in the following way in the memory.</p>
+        <p>In the stack, the information of string like its length, its capacity
+        that is initially given by the allocator and the heap pointer is placed.
+        All these fields have a fixed size which makes up an entry of String on
+        the stack. The actual content of the string is placed in the heap and
+        its pointer is stored in the stack. So whenever we access the value of a
+        string, the lookup happens in the stack, which yields the heap pointer
+        and then via the pointer, the value is accessed from the heap.</p>
+        <h3 id="deallocation">Deallocation</h3>
+        <p>Now, when the variable goes out of scope, the memory that the
+        variable holds has to be deallocated and given back to the OS. For the
+        variables in stack, while deallocating, the stack members are simply
+        popped and just the popping action deallocates the memory. But in case
+        of String, simply popping the elements will surely deallocate the stack
+        entry of the String but we also know String type holds memory in the
+        heap which needs to be explicitly deallocated. So while the variable
+        goes out of scope, the heap memory that the variable held needs to be
+        dropped. Otherwise the heap memory is leaked and it is not okay to do
+        so.</p>
+        <h4 id="drop-trait">Drop Trait</h4>
+        <p>The deallocation of heap entry happens by calling <code>drop()</code>
+        method on the type. This drops the underlying heap allocation.</p>
+        <h2 id="copy-vs-clone">Copy vs Clone</h2>
+        <p>Now lets imagine a scenario.</p>
+        <div class="sourceCode" id="cb3"><pre
+        class="sourceCode rust"><code class="sourceCode rust"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// first case</span></span>
+        <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> x <span class="op">:</span><span class="dt">i32</span> <span class="op">=</span> <span class="dv">5</span><span class="op">;</span></span>
+        <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> y <span class="op">:</span><span class="dt">i32</span> <span class="op">=</span> x<span class="op">;</span></span>
+        <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+        <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">// second case</span></span>
+        <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s1<span class="op">:</span> <span class="dt">String</span> <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">&quot;hello&quot;</span>)<span class="op">;</span> </span>
+        <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s2<span class="op">:</span> <span class="dt">String</span> <span class="op">=</span> s1<span class="op">;</span></span></code></pre></div>
+        <p>Here in the first case, when x is initialized, its value is allocated
+        in the stack. When y is allocated, the stack entry of x is copied for y
+        i.e. y receives the copy of x which is also 5.</p>
+        <p>The act of copying the contents of the stack is dictated by the
+        <code>Copy</code> trait.</p>
+        <p>Now lets imagine the second scenario just like we did for the first
+        scenario.</p>
+        <p>The stack entry of <code>s1</code> consists of
+        <code>(len, cap, pointer to the heap)</code>. If we now copy this for
+        <code>s2</code>, <code>s2</code> will now contain the copy of these which means it will also have
+        <code>(len, cap, pointer to the heap)</code></p>
+        <img src="../assets/Pasted image 20260220105327.png" alt="Description of the image">
+        <p>Now during the deallocation when the variable <code>s1</code> and <code>s2</code> go out of
+        scope, the drop method for both of these is called resulting in dropping
+        the underlying heap allocation. Since they point to the same heap
+        memory, that creates a situation of double free which is not okay.</p>
+        <p>So what happens in the above situation?</p>
+        <p>When you initialize <code>s2</code> with <code>s1</code>, the value is moved from <code>s1</code> to <code>s2</code> and
+        <code>s1</code> no longer becomes valid. This is called moved. The ownership of the
+        underlying heap allocation is moved from <code>s1</code> to <code>s2</code>. Now since <code>s2</code> is the
+        new owner of the underlying heap, when the deallocation happens, only
+        <code>s2</code>’s drop will drop the underlying heap allocation thus preventing the
+        double free.</p>
+        <img src="../assets/Pasted image 20260220105819.png" alt="Description of the image">
+        <p>But there is situation in which we would like to duplicate the the
+        variables and even the ones allocated in heap. This is also called a
+        deep copy. Since deep copy involves also copying the underlying heap
+        memory, this is expensive task and by users have to explicitly instruct
+        the program to create a deep copy by invoking the <code>clone()</code>
+        method of the <code>Clone</code> trait. This creates two entries s1 and s2 and their
+        respective heap pointers. Now when the variable goes out of scope or
+        drop is called, they drop their respective heap allocations.</p>
+        <div class="sourceCode" id="cb4"><pre
+        class="sourceCode rust"><code class="sourceCode rust"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s1<span class="op">:</span> <span class="dt">String</span> <span class="op">=</span> <span class="dt">String</span><span class="pp">::</span>from(<span class="st">&quot;hello&quot;</span>)<span class="op">;</span> </span>
+        <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> s2<span class="op">:</span> <span class="dt">String</span> <span class="op">=</span> s1<span class="op">.</span>clone()<span class="op">;</span></span></code></pre></div>
+        <img src="../assets/Pasted image 20260220110302.png" alt="Description of the image">
+      </section>
+    </article>
 
-</article>
-
-<a href="../index.html" class="back-link">← Back to Home</a>
-
-</body>
+    <a href="../index.html" class="back-link">← Back to Home</a>
+  </body>
 </html>
-
